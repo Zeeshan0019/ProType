@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProType - Master Your Typing Skills</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <h1 class="title">⚡ ProType</h1>
+            <p class="subtitle">Master Your Typing Speed</p>
+        </header>
+
+        <!-- Controls Section -->
+        <div class="controls">
+            <div class="control-group">
+                <label>Content Type:</label>
+                <select id="domainSelect">
+                    <option value="general">📚 General Knowledge</option>
+                    <option value="story">📖 Creative Stories</option>
+                    <option value="coding">💻 Programming</option>
+                </select>
+            </div>
+            <button id="newGameBtn">🎮 New Challenge</button>
+        </div>
+
+        <!-- Stats Display -->
+        <div class="stats">
+            <div id="info">30s</div>
+        </div>
+
+        <!-- Typing Area -->
+        <div class="typing-area">
+            <div id="game" tabindex="0">
+                <div id="words"></div>
+                <div id="cursor"></div>
+                <div id="focus-message">Click here to start typing</div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="results hidden">
+            <h2>🎉 Challenge Complete!</h2>
+            <div class="score-display">
+                <div class="score-item">
+                    <span class="score-label">Speed</span>
+                    <span id="final-wpm" class="score-value">0 WPM</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">Accuracy</span>
+                    <span id="final-accuracy" class="score-value">0%</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">Level</span>
+                    <span id="performance-level" class="score-value">Beginner</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="typing.js"></script>
+</body>
+</html>
