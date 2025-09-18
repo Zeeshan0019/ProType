@@ -1,5 +1,5 @@
-// Game variables - simple and clear
-let gameTime = 30 * 1000; // 30 seconds in milliseconds
+// Simple game variables
+let gameTime = 30 * 1000;
 let timer = null;
 let gameStart = null;
 let currentWordIndex = 0;
@@ -11,11 +11,9 @@ let isGameActive = false;
 // DOM elements
 let domainSelect, newGameBtn, infoDiv, wordsDiv, gameDiv, focusMessage, resultsDiv;
 
-// Initialize when page loads
+// Initialize game
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('ProType initialized');
-    
-    // Get DOM elements
+    // Get elements
     domainSelect = document.getElementById("domainSelect");
     newGameBtn = document.getElementById("newGameBtn");
     infoDiv = document.getElementById("info");
@@ -24,76 +22,43 @@ document.addEventListener('DOMContentLoaded', function() {
     focusMessage = document.getElementById("focus-message");
     resultsDiv = document.getElementById("results");
     
-    // Set up event listeners
-    setupEventListeners();
-    
-    // Start first game
-    newGame();
-});
-
-// Set up all event listeners
-function setupEventListeners() {
-    // New game button
-    newGameBtn.addEventListener("click", () => {
-        newGame(domainSelect.value);
-    });
-
-    // Domain change
-    domainSelect.addEventListener("change", (e) => {
-        newGame(e.target.value);
-    });
-
-    // Keyboard input
+    // Event listeners
+    newGameBtn.addEventListener("click", () => newGame(domainSelect.value));
+    domainSelect.addEventListener("change", (e) => newGame(e.target.value));
     gameDiv.addEventListener("keydown", handleKeyPress);
     gameDiv.addEventListener("click", () => gameDiv.focus());
-    
-    // Focus management
     gameDiv.addEventListener("blur", () => {
-        if (isGameActive) {
-            focusMessage.style.display = "block";
-        }
+        if (isGameActive) focusMessage.style.display = "block";
     });
+    gameDiv.addEventListener("focus", () => focusMessage.style.display = "none");
     
-    gameDiv.addEventListener("focus", () => {
-        focusMessage.style.display = "none";
-    });
-}
-
-// Format word for display
-function formatWord(word) {
-    return `<div class="word"><span class="letter">${word.split("").join("</span><span class='letter'>")}</span></div>`;
-}
+    newGame();
+});
 
 // Get text from API
 async function getText(domain) {
     try {
         const response = await fetch(`http://localhost:5000/generate?domain=${domain}&t=${Date.now()}`);
         const data = await response.json();
-        
-        if (data.text) {
-            return data.text;
-        } else {
-            throw new Error('No text received');
-        }
+        return data.text || getFallbackText(domain);
     } catch (error) {
-        console.log('Using fallback text');
-        
-        // Simple fallback texts
-        const fallbacks = {
-            general: "The quick brown fox jumps over the lazy dog. This pangram contains every letter of the alphabet at least once. It is commonly used for typing practice.",
-            story: "Once upon a time, there was a programmer who loved to type fast. Every day, they practiced their skills to become better at coding and writing.",
-            coding: "Programming languages help us communicate with computers. JavaScript is widely used for web development. Functions and variables are basic building blocks."
-        };
-        
-        return fallbacks[domain] || fallbacks.general;
+        return getFallbackText(domain);
     }
+}
+
+// Fallback texts
+function getFallbackText(domain) {
+    const fallbacks = {
+        general: "The quick brown fox jumps over the lazy dog. This pangram contains every letter of the alphabet at least once.",
+        story: "Once upon a time, there was a programmer who loved to type fast. Every day, they practiced coding skills.",
+        coding: "Programming languages help us communicate with computers. JavaScript is widely used for web development."
+    };
+    return fallbacks[domain] || fallbacks.general;
 }
 
 // Start new game
 async function newGame(domain = "general") {
-    console.log(`Starting new game: ${domain}`);
-    
-    // Reset everything
+    // Reset game
     clearInterval(timer);
     gameStart = null;
     currentWordIndex = 0;
@@ -102,43 +67,37 @@ async function newGame(domain = "general") {
     errors = 0;
     isGameActive = false;
     
-    // Hide results
+    // Reset UI
     resultsDiv.classList.add('hidden');
-    
-    // Show loading
+    gameDiv.style.opacity = "1";
+    gameDiv.style.pointerEvents = "auto";
     infoDiv.textContent = "Loading...";
     wordsDiv.innerHTML = "🤖 Generating content...";
     
-    // Get text and display it
+    // Get and display text
     const text = await getText(domain);
     const words = text.split(" ").filter(word => word.length > 0);
     
-    // Create word elements
     let html = "";
     words.forEach((word, index) => {
-        html += formatWord(word);
+        html += `<div class="word"><span class="letter">${word.split("").join("</span><span class='letter'>")}</span></div>`;
         if (index < words.length - 1) html += " ";
     });
     
     wordsDiv.innerHTML = html;
+    document.querySelector('.letter').classList.add('current');
     
-    // Set first letter as current
-    const firstLetter = document.querySelector('.letter');
-    if (firstLetter) {
-        firstLetter.classList.add('current');
-    }
-    
-    // Reset display
     infoDiv.textContent = "30s";
     gameDiv.focus();
     updateCursor();
     
-    console.log(`Game ready with ${words.length} words`);
+    // Scroll to top for new game
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // Handle key presses
 function handleKeyPress(e) {
-    // Start timer on first key
+    // Start timer
     if (!gameStart) {
         gameStart = Date.now();
         isGameActive = true;
@@ -157,11 +116,15 @@ function handleKeyPress(e) {
         }, 100);
     }
     
-    if (!isGameActive) return;
+    // Block input if game ended
+    if (!isGameActive) {
+        e.preventDefault();
+        return;
+    }
     
     e.preventDefault();
     
-    // Handle different keys
+    // Handle keys
     if (e.key === ' ') {
         handleSpace();
     } else if (e.key === 'Backspace') {
@@ -171,8 +134,10 @@ function handleKeyPress(e) {
     }
 }
 
-// Handle typing a character
+// Handle character typing
 function handleCharacter(char) {
+    if (!isGameActive) return;
+    
     const words = document.querySelectorAll('.word');
     const currentWord = words[currentWordIndex];
     
@@ -181,10 +146,8 @@ function handleCharacter(char) {
     const currentLetter = currentWord.children[currentCharIndex];
     const expectedChar = currentLetter.textContent;
     
-    // Remove current highlight
     currentLetter.classList.remove('current');
     
-    // Check if correct
     if (char === expectedChar) {
         currentLetter.classList.add('correct');
     } else {
@@ -195,7 +158,6 @@ function handleCharacter(char) {
     currentCharIndex++;
     totalTyped++;
     
-    // Move to next letter
     if (currentCharIndex < currentWord.children.length) {
         currentWord.children[currentCharIndex].classList.add('current');
     }
@@ -203,12 +165,14 @@ function handleCharacter(char) {
     updateCursor();
 }
 
-// Handle space key
+// Handle space
 function handleSpace() {
+    if (!isGameActive) return;
+    
     const words = document.querySelectorAll('.word');
     const currentWord = words[currentWordIndex];
     
-    // Mark remaining letters as wrong
+    // Mark remaining letters wrong
     for (let i = currentCharIndex; i < currentWord.children.length; i++) {
         if (!currentWord.children[i].classList.contains('correct')) {
             currentWord.children[i].classList.add('incorrect');
@@ -216,7 +180,7 @@ function handleSpace() {
         }
     }
     
-    // Move to next word
+    // Next word
     if (currentWordIndex < words.length - 1) {
         currentWordIndex++;
         currentCharIndex = 0;
@@ -229,29 +193,26 @@ function handleSpace() {
 
 // Handle backspace
 function handleBackspace() {
-    if (currentCharIndex > 0) {
-        const words = document.querySelectorAll('.word');
-        const currentWord = words[currentWordIndex];
-        
-        // Remove current highlight
-        if (currentCharIndex < currentWord.children.length) {
-            currentWord.children[currentCharIndex].classList.remove('current');
-        }
-        
-        // Go back one character
-        currentCharIndex--;
-        const prevLetter = currentWord.children[currentCharIndex];
-        
-        // Reset previous letter
-        prevLetter.classList.remove('correct', 'incorrect');
-        prevLetter.classList.add('current');
-        
-        if (totalTyped > 0) totalTyped--;
-        updateCursor();
+    if (!isGameActive || currentCharIndex === 0) return;
+    
+    const words = document.querySelectorAll('.word');
+    const currentWord = words[currentWordIndex];
+    
+    if (currentCharIndex < currentWord.children.length) {
+        currentWord.children[currentCharIndex].classList.remove('current');
     }
+    
+    currentCharIndex--;
+    const prevLetter = currentWord.children[currentCharIndex];
+    
+    prevLetter.classList.remove('correct', 'incorrect');
+    prevLetter.classList.add('current');
+    
+    if (totalTyped > 0) totalTyped--;
+    updateCursor();
 }
 
-// Update cursor position
+// Update cursor
 function updateCursor() {
     const cursor = document.getElementById("cursor");
     const words = document.querySelectorAll('.word');
@@ -272,65 +233,73 @@ function updateCursor() {
 function getWPM() {
     if (!gameStart) return 0;
     const minutes = (Date.now() - gameStart) / 60000;
-    const words = totalTyped / 5; // 5 characters = 1 word
+    const words = totalTyped / 5;
     return Math.round(words / minutes);
 }
 
-// Calculate accuracy percentage
+// Calculate accuracy
 function getAccuracy() {
     if (totalTyped === 0) return 100;
     return Math.round(((totalTyped - errors) / totalTyped) * 100);
 }
 
 // Get performance level
-// Enhanced performance level calculation with accuracy penalty
 function getLevel(wpm, accuracy) {
-    // Critical accuracy threshold - below 50% gets poor ratings
-    if (accuracy < 60) {
-        return "⚠️ Below Average";
-    }
+    if (accuracy < 60) return "🤥 You're Bluffing!";
     
-
-    
-    // Good accuracy (80%+) - standard performance levels
     if (accuracy < 90) {
         if (wpm < 20) return "🌱 Beginner";
-        if (wpm < 30) return "⚡ Improving";
-        if (wpm < 40) return "🚀 Good";
-        if (wpm < 50) return "💫 Great"; 
-        return "🏆 Excellent"; // Cap at excellent for good accuracy
+        if (wpm < 30) return "⚡ Good";
+        if (wpm < 40) return "🚀 Great";
+        if (wpm < 50) return "💫 Pro";
+        return "🏆 Excellent";
     }
     
-    // Excellent accuracy (90%+) - all levels available
     if (wpm < 20) return "🌱 Beginner";
     if (wpm < 30) return "📚 Learning";
-    if (wpm < 40) return "⚡ Improving";
-    if (wpm < 50) return "🚀 Good";
-    if (wpm < 60) return "💫 Great";
+    if (wpm < 40) return "⚡ Good";
+    if (wpm < 50) return "🚀 Great";
+    if (wpm < 60) return "💫 Pro";
     if (wpm < 80) return "🏆 Excellent";
     return "👑 Master";
 }
 
-
-// End game and show results
+// End game
 function endGame() {
     clearInterval(timer);
     isGameActive = false;
     
+    // Disable game area
+    gameDiv.blur();
+    gameDiv.style.opacity = "0.7";
+    gameDiv.style.pointerEvents = "none";
+    document.getElementById("cursor").style.display = "none";
+    
+    // Calculate results
     const wpm = getWPM();
     const accuracy = getAccuracy();
-    const level = getLevel(wpm);
+    const level = getLevel(wpm, accuracy);
     
-    // Update results display
+    // Update results
     document.getElementById('final-wpm').textContent = `${wpm} WPM`;
     document.getElementById('final-accuracy').textContent = `${accuracy}%`;
     document.getElementById('performance-level').textContent = level;
     
-    // Show results
-    resultsDiv.classList.remove('hidden');
+    // Special styling for bluffing
+    const performanceElement = document.getElementById('performance-level');
+    if (accuracy < 60) {
+        performanceElement.style.color = '#ff4444';
+        performanceElement.style.fontWeight = 'bold';
+        performanceElement.style.animation = 'shake 0.5s ease-in-out 3';
+    } else {
+        performanceElement.style.color = '';
+        performanceElement.style.fontWeight = '';
+        performanceElement.style.animation = '';
+    }
     
-    // Hide cursor
-    document.getElementById("cursor").style.display = "none";
-    
-    console.log(`Game ended: ${wpm} WPM, ${accuracy}% accuracy`);
+    // Show results with scroll
+    setTimeout(() => {
+        resultsDiv.classList.remove('hidden');
+        resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, accuracy < 60 ? 800 : 300);
 }
