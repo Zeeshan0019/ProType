@@ -49,7 +49,7 @@ app.get("/generate", async (req, res) => {
     const randomSeed = Math.floor(Math.random() * 10000);
     const topics = {
       general: [
-        "fascinating scientific breakthroughs", "historical mysteries", "technological innovations", 
+        "human psychology","fascinating scientific breakthroughs", "historical mysteries", "technological innovations", 
         "natural wonders", "space discoveries", "ancient civilizations", "modern inventions",
         "environmental phenomena", "cultural achievements", "medical advances"
       ],
@@ -75,15 +75,15 @@ app.get("/generate", async (req, res) => {
     switch (domain) {
       case "story":
         systemPrompt = "You are a creative storyteller who writes engaging short stories for typing practice.";
-        userPrompt = `Write a unique, captivating short story (3-4 sentences) about ${randomTopic}. Make it creative and fun but keep it simple for typing practice. No dialogue or quotation marks. Seed: ${randomSeed}`;
+        userPrompt = `Write a unique, captivating short story (length will be around 60-70 words but the story will be complete) about ${randomTopic}. Make it creative and fun but keep it simple for typing practice. No dialogue or quotation marks. Seed: ${randomSeed}`;
         break;
       case "coding":
         systemPrompt = "You are an experienced software developer who explains programming concepts clearly.";
-        userPrompt = `Write an informative paragraph about ${randomTopic} in programming. Explain the concept clearly with practical insights. No code blocks, just explanatory text that's educational. Seed: ${randomSeed}`;
+        userPrompt = `Write an informative paragraph about ${randomTopic} in programming. Explain the concept clearly with practical insights. No code blocks, just explanatory text that's educational, length will be around 60-70 words but the explanation will be complete. Seed: ${randomSeed}`;
         break;
       default: // general
         systemPrompt = "You are an educational content creator who writes interesting and engaging factual content.";
-        userPrompt = `Write a fascinating paragraph about ${randomTopic}. Include interesting facts that are educational and engaging. Make it suitable for typing practice with clear, flowing sentences. Seed: ${randomSeed}`;
+        userPrompt = `Write a fascinating paragraph about ${randomTopic}. Try focus more upon human psychology, length will be around 60-70 words but the fact/ general knowlegde will be complete. Include interesting facts that are educational and engaging. Make it suitable for typing practice with clear, flowing sentences. Seed: ${randomSeed}`;
     }
 
     // Call Groq API with GPT-OSS-20B model
